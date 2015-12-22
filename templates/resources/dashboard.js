@@ -295,7 +295,6 @@ jQuery.Class('Dashboard',{
 				editViewForm.unbind();
 				console.log(editViewForm);
 				editViewForm.submit(function(e){
-					console.log("submit");
 					//Form should submit only once for multiple clicks also
 					if(typeof editViewForm.data('submit') != "undefined") {
 						return false;
@@ -306,7 +305,6 @@ jQuery.Class('Dashboard',{
 							editViewForm.data('submit', 'true');
 							//on submit form trigger the recordPreSave event
 							var recordPreSaveEvent = jQuery.Event(Vtiger_Edit_Js.recordPreSave);
-							console.log(recordPreSaveEvent);
 							editViewForm.trigger(recordPreSaveEvent, {'value' : 'edit'});
 							if(recordPreSaveEvent.isDefaultPrevented()) {
 								//If duplicate record validation fails, form should submit again
