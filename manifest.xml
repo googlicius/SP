@@ -1,0 +1,29 @@
+<?xml version="1.0"?>
+<module>
+    <!-- Module name -->
+    <name>SalesPanel</name>
+    <!-- This is the name that will appear in the Vtiger GUI -->
+    <label>Sales Panel</label>
+    <!-- Module will be listed under Tools -->
+    <parent>Marketing</parent>
+    <!-- Module version -->
+    <version>1.1</version>
+    <!-- Dependencies -->
+    <dependencies>
+        <!-- To install in Vtiger 6, this needs to be >= 6.0.0 -->
+        <vtiger_version>6.1.0</vtiger_version>
+        <vtiger_max_version>6.*</vtiger_max_version>
+    </dependencies>
+	
+	<license>
+        <inline><![CDATA[  *********************************************************
+		 * The contents of these file is are subject to GPL 2.
+		 ********************************************************************************
+		 *  Module       : SalesPanel
+		 *  Version      : 1.0
+		 *  Vtiger       : 6.1.0
+		 *  Author       : haidang009@gmail.com
+		 ********************************************************************************
+	 ]]></inline>
+    </license>
+</module>
