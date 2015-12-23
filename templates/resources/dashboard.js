@@ -78,12 +78,15 @@ jQuery.Class('Dashboard',{
 
 	detailView : {
 		detailviewJsInstance : null,
+		pending : false, // prevent double click
 		loadDetailView : function(url_vars,isAjax){
 			var thisInstance = this;
+			if(this.pending == true) return;
+			this.pending = true;
 			var dashboardInstance = Dashboard.getInstance();
 			var params = url_vars;
 			var progressInstance = jQuery.progressIndicator();
-
+			console.log(params);
 			thisInstance.relatedView.resetListOfRelatedListView();
 
 			params.mode = "showDetailViewByMode";
@@ -99,6 +102,7 @@ jQuery.Class('Dashboard',{
 				dashboardInstance.view.setRecordId(related_params.record);
 				aDeferred.resolve();
 				progressInstance.hide();
+				thisInstance.pending = false;
 
 				//Load js files of current view of this view
 				dashboardInstance.view.loadJsOfCurrentView(related_params);
@@ -136,11 +140,43 @@ jQuery.Class('Dashboard',{
 			var actionsHolder = jQuery("#actionsHolder");
 			actionsHolder.html(template(data));
 			Dashboard.getInstance().view.ajaxyTheLinks(actionsHolder);
+
+			// after render actions buttons, preload EditView
+			var detailViewContainer = this.getDetailViewContainer();
+			var preloadEditViewBtns = jQuery(".preloadEditViewBtnsHolder",actionsHolder).find('span');
+
+			for (var i = 0; i < preloadEditViewBtns.length; i++) {
+				var params = {
+					module : jQuery(preloadEditViewBtns[i]).data('module'),
+					view : 'Edit',
+					sourceModule : jQuery("#module").val(),
+					sourceRecord : jQuery("#recordId").val(),
+					relationOperation : true
+				};
+				params[jQuery(preloadEditViewBtns[i]).data('name')] = jQuery("#recordId").val();
+				Dashboard.getInstance().editView.preloadEditView(params);
+			};
+
+			// register preloadEditViewBtns click
+			preloadEditViewBtns.on('click',function(e){
+				if(jQuery(this).find('a').attr('disabled') == 'disabled') return;
+				console.log("preloadEditViewBtns clicked");
+				var params = {
+					module : jQuery(this).data('module'),
+					view : 'Edit',
+					sourceModule : jQuery("#module").val(),
+					sourceRecord : jQuery("#recordId").val(),
+					relationOperation : true
+				}
+
+				params[jQuery(this).data('name')] = jQuery("#recordId").val();
+				Dashboard.getInstance().editView.loadEditViewFromPreloadStorage(params);
+			});
 		},
 
 		detaiViewRender : function(data,title){
 			var dashboardInstance = Dashboard.getInstance();
-			var detailViewContainer = jQuery(".detailViewContainer");
+			var detailViewContainer = this.getDetailViewContainer();
 			var titleViewContainer = jQuery(".titleViewHolder");
 
 			dashboardInstance.quicklink.resetAll();
@@ -157,14 +193,14 @@ jQuery.Class('Dashboard',{
 
 			dashboardInstance.view.ajaxyTheLinks(detailViewContainer);
 		},
+		getDetailViewContainer : function(){
+			return jQuery(".detailViewContainer");
+		},
 		relatedView : {
 			ListOfRelatedListView : {},
 
 			resetListOfRelatedListView : function(){
 				this.ListOfRelatedListView = {};
-			},
-			getDetailViewContainer : function(){
-				return jQuery(".detailViewContainer");
 			},
 			addLoadingGif : function(){
 				//<span class="pull-right" style="width:20px"><img class="loadinImg alignMiddle" src="layouts/vlayout/skins/softed/images/loading.gif"></span>
@@ -177,7 +213,7 @@ jQuery.Class('Dashboard',{
 					params.type = "GET";
 
 					SalesPanel_Statics_Js.sendRequest(params).then(function(related_params,result){
-						var detailViewContainer = thisInstance.getDetailViewContainer();
+						var detailViewContainer = dashboardInstance.detailview.getDetailViewContainer();
 						var relatedContainer = jQuery(".related",detailViewContainer);
 						var relatedLink = jQuery('li[id="' + related_params.linkId + '"]', relatedContainer);
 
@@ -215,7 +251,7 @@ jQuery.Class('Dashboard',{
 					});
 				}
 				content += '</ul>';
-				var detailViewContainer = this.getDetailViewContainer();
+				var detailViewContainer = dashboardInstance.detailView.getDetailViewContainer();
 				var relatedContainer = jQuery(".related",detailViewContainer);
 				dashboardInstance.view.render(content,relatedContainer);
 				this.registerRelatedLinkClick();
@@ -223,7 +259,7 @@ jQuery.Class('Dashboard',{
 			registerRelatedLinkClick : function(){
 				var dashboardInstance = Dashboard.getInstance();
 				var thisInstance = this;
-				var detailViewContainer = thisInstance.getDetailViewContainer();
+				var detailViewContainer = dashboardInstance.detailView.getDetailViewContainer();
 				var relatedContainer = jQuery(".related",detailViewContainer);
 				var detailViewContents = jQuery('.contents',detailViewContainer);
 				jQuery('li', relatedContainer).on('click',function(e){
@@ -231,7 +267,7 @@ jQuery.Class('Dashboard',{
 					if(typeof thisInstance.ListOfRelatedListView[linkId] != 'undefined'){
 						Dashboard.getInstance().view.render(thisInstance.ListOfRelatedListView[linkId],detailViewContents);
 						//reload again
-						detailViewContainer = thisInstance.getDetailViewContainer();
+						detailViewContainer = dashboardInstance.detailView.getDetailViewContainer();
 						dashboardInstance.listView.rowOnclick(jQuery('tr.listViewEntries',detailViewContainer));
 					}else{
 						//var params = SalesPanel_Statics_Js.getUrlVars(jQuery(this).data('url'));
@@ -246,13 +282,17 @@ jQuery.Class('Dashboard',{
 					jQuery(this).addClass('active');
 					e.preventDefault();
 				});
-			}			
+			}
 		},
 	},
 
 	editView : {
+		pending : false, // prevent double click
 		loadEditView : function(url_vars,isAjax){
+			console.log(this.pending);
 			var thisInstance = this;
+			if(this.pending == true) return;
+			this.pending = true;
 			var dashboardInstance = Dashboard.getInstance();
 			var params = url_vars;
 			var progressInstance = jQuery.progressIndicator();
@@ -266,33 +306,47 @@ jQuery.Class('Dashboard',{
 				dashboardInstance.view.setView(related_params.view);
 				dashboardInstance.view.setRecordId(related_params.record);
 				progressInstance.hide();
+				thisInstance.pending = false;
 				//Load js files of current view of this view
 				dashboardInstance.view.loadJsOfCurrentView(related_params);
 			});
 		},
+		//Load view from preload storage;
+		loadEditViewFromPreloadStorage : function(url_vars){
+			if(this.pending == true) return;
+			this.pending = true;
+			var dashboardInstance = Dashboard.getInstance();
+			this.editViewRender(this.editViewsPreloaded[url_vars.module],"- " + app.vtranslate('Create new') + " " + app.vtranslate(url_vars.module));
+			dashboardInstance.view.setModule(url_vars.module);
+			dashboardInstance.view.setView(url_vars.view);
+			//dashboardInstance.view.setRecordId(url_vars.record); // create new, not store record.
+			this.pending = false;
+			//Load js files of current view of this view
+			dashboardInstance.view.loadJsOfCurrentView(url_vars);
+		},
 		editViewRender : function(data,title){
 			var dashboardInstance = Dashboard.getInstance();
-			var editViewContainer = jQuery(".editViewContainer");
+			var editViewPagDiv = jQuery(".editViewPagDiv");
 			var titleViewContainer = jQuery(".titleViewHolder");
 
 			dashboardInstance.quicklink.resetAll();
 			dashboardInstance.view.resetAll();
 			
-			dashboardInstance.view.render(data,editViewContainer);
+			dashboardInstance.view.render(data,editViewPagDiv);
 			dashboardInstance.view.render(title,titleViewContainer);
-			app.showSelect2ElementView(editViewContainer.find('select.select2'));
-			app.changeSelectElementView(editViewContainer);
+			app.showSelect2ElementView(editViewPagDiv.find('select.select2'));
+			app.changeSelectElementView(editViewPagDiv);
 
-			dashboardInstance.view.ajaxyTheLinks(editViewContainer);
-			this.registerSubmitForm(editViewContainer);
+			dashboardInstance.view.ajaxyTheLinks(editViewPagDiv);
+			this.registerSubmitForm(editViewPagDiv);
 		},
-		registerSubmitForm : function(editViewContainer){
+		registerSubmitForm : function(editViewPagDiv){
 			editlInstance = Vtiger_Edit_Js.getInstance();
 			editlInstance.registerSubmitEvent = function() {
-				var editViewForm = this.getForm();
-
+				var editViewForm = jQuery("#EditView",editViewPagDiv);
+				//console.log(editViewPagDiv);
 				//Remove a previously-attached event handler from the editViewForm.
-				editViewForm.unbind();
+				editViewForm.unbind('submit');
 				console.log(editViewForm);
 				editViewForm.submit(function(e){
 					//Form should submit only once for multiple clicks also
@@ -318,7 +372,7 @@ jQuery.Class('Dashboard',{
 								},function(err,error){
 									var parmas_vars = SalesPanel_Statics_Js.getUrlVars(params);
 									if(typeof parmas_vars.record != 'undefined'){
-										detail_params = {module: parmas_vars.module,view: parmas_vars.view,record: parmas_vars.record};
+										detail_params = {module: parmas_vars.module,view: 'Detail',record: parmas_vars.record};
 										Dashboard.getInstance().detailView.loadDetailView(detail_params);
 									}
 								});
@@ -334,6 +388,20 @@ jQuery.Class('Dashboard',{
 					}
 				});
 			};
+		},
+		// preload EditView by specific url
+		editViewsPreloaded : {},
+		preloadEditView : function(url_vars){
+			var thisInstance = this;
+			//var dashboardInstance = Dashboard.getInstance();
+			var params = url_vars;
+			//Get editview content
+			var aDeferred = jQuery.Deferred();
+			SalesPanel_Statics_Js.sendRequest(params).then(function(related_params,result){
+				var actionsHolder = jQuery("#actionsHolder");
+				thisInstance.editViewsPreloaded[related_params.module] = result;
+				jQuery(".preload_" + related_params.module,actionsHolder).removeAttr('disabled');
+			});
 		}
 	},
 
@@ -490,13 +558,19 @@ jQuery.Class('Dashboard',{
 					thisInstance.jsViewInstance = null;
 					delete thisInstance.jsViewInstance;
 					if(related_params.view == 'Detail'){
-						var jsClassName = "Vtiger_Detail_Js";
-						window[jsClassName].detailInstance = false;
+						Vtiger_Detail_Js.detailInstance = false;
+						thisInstance.jsViewInstance = Vtiger_Detail_Js.getInstance();
 					}else if(related_params.view == 'Edit'){
-						var jsClassName = "Vtiger_Edit_Js";
-						window[jsClassName].editlInstance = false;
+						Vtiger_Edit_Js.editlInstance = false;
+						thisInstance.jsViewInstance = Vtiger_Edit_Js.getInstance();
+						// because container of Edit view has been reload to DOM and then we rewrite the getForm function of Vtiger_Edit_Js instance
+						thisInstance.jsViewInstance.getForm = function(){
+							this.setForm(jQuery('#EditView'));
+							return this.formElement;
+						}
 					}
-					thisInstance.jsViewInstance = window[jsClassName].getInstance();
+
+					
 					thisInstance.jsViewInstance.registerEvents();
 					progressInstance.hide();
 

@@ -51,6 +51,10 @@ jQuery.Class("SalesPanel_Statics_Js",{
 		var Deferred = jQuery.Deferred();
 		var url = "index.php";
 		var thisInstance = this;
+		if(typeof data == 'undefined'){
+			console.log("Input Undefined");
+			return;
+		}
 		var type = (typeof data.type == 'undefined') ? 'POST' : data.type;
 		$.ajax({
 			url : url,

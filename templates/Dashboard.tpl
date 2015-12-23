@@ -30,7 +30,7 @@
 		<!-- <div id="contentViewHolder"></div> -->
 		<div class="listViewPageDiv"></div>
 		<div class="detailViewContainer" style="padding:0px"></div>
-		<div class="editViewContainer" style="padding:0px"></div>
+		<div class="editViewPagDiv" style="padding:0px"></div>
 		<div class="jsHolder"></div>
 	</div>
 </div>
@@ -56,32 +56,61 @@
 	<div class="span7">
 		<div class="pull-right detailViewButtoncontainer">
 			<div class="btn-toolbar">
-			<% _.each(rc.DETAILVIEWBASIC,function(DETAIL_VIEW_BASIC_LINK,key,list){ %>
-			<span class="btn-group">
-				<a class="btn" id=""
-					href='<%= DETAIL_VIEW_BASIC_LINK.linkurl %>'>
-					<strong><%= DETAIL_VIEW_BASIC_LINK.linkLabelTrans %></strong>
-				</a>
-			</span>
-			<%});%>
-			<% if (Object.keys(rc.DETAILVIEW).length > 0){ %>
-			<span class="btn-group">
-				<button class="btn dropdown-toggle" data-toggle="dropdown" href="javascript:void(0);">
-					<strong>{vtranslate('LBL_MORE', $MODULE_NAME)}</strong>&nbsp;&nbsp;<i class="caret"></i>
-				</button>
-				<ul class="dropdown-menu pull-right">
-					<% _.each(rc.DETAILVIEW,function(DETAIL_VIEW_LINK,key,list){ %>
-					<% if (DETAIL_VIEW_LINK.linklabel == ""){ %>
-						<li class="divider"></li>
-					<% }else{ %>
-					<li id="">
-						<a href='<%= DETAIL_VIEW_LINK.linkurl%>' ><%= DETAIL_VIEW_LINK.linkLabelTrans %></a>
-					</li>
-					<% } %>
-					<% }); %>
-				</ul>
-			</span>
-			<% } %>
+				<div class="preloadEditViewBtnsHolder">
+				<% if(rc.MODULE == 'Accounts' || rc.MODULE == 'Contacts') { %>
+					<span class="btn-group" data-module="SalesOrder" data-name="account_id">
+						<a class="btn btn-default preload_SalesOrder" disabled="disabled"
+							href='javascript:;'>
+							<strong>{vtranslate('Add',$MODULE_NAME)} {vtranslate('SalesOrder',$MODULE_NAME)|lower}</strong>
+						</a>
+					</span>
+					<span class="btn-group" data-module="Quotes" data-name="account_id">
+						<a class="btn btn-default preload_Quotes" disabled="disabled"
+							href='javascript:;'>
+							<strong>{vtranslate('Add',$MODULE_NAME)} {vtranslate('Quotes',$MODULE_NAME)|lower}</strong>
+						</a>
+					</span>
+					<span class="btn-group" data-module="HelpDesk" data-name="parent_id">
+						<a class="btn btn-default preload_HelpDesk" disabled="disabled"
+							href='javascript:;'>
+							<strong>{vtranslate('Add',$MODULE_NAME)} {vtranslate('Ticket',$MODULE_NAME)|lower}</strong>
+						</a>
+					</span>
+				<% }else if(rc.MODULE == 'SalesOrder'){ %>
+					<span class="btn-group" data-module="Coupons" data-name="salesorderid">
+						<a class="btn btn-default preload_Coupons" disabled="disabled"
+							href='javascript:;'>
+							<strong>{vtranslate('Add',$MODULE_NAME)} {vtranslate('Coupons',$MODULE_NAME)|lower}</strong>
+						</a>
+					</span>
+				<% } %>
+				</div>
+				<% _.each(rc.DETAILVIEWBASIC,function(DETAIL_VIEW_BASIC_LINK,key,list){ %>
+				<span class="btn-group">
+					<a class="btn" id=""
+						href='<%= DETAIL_VIEW_BASIC_LINK.linkurl %>'>
+						<strong><%= DETAIL_VIEW_BASIC_LINK.linkLabelTrans %></strong>
+					</a>
+				</span>
+				<%});%>
+				<% if (Object.keys(rc.DETAILVIEW).length > 0){ %>
+				<span class="btn-group">
+					<button class="btn dropdown-toggle" data-toggle="dropdown" href="javascript:void(0);">
+						<strong>{vtranslate('LBL_MORE', $MODULE_NAME)}</strong>&nbsp;&nbsp;<i class="caret"></i>
+					</button>
+					<ul class="dropdown-menu pull-right">
+						<% _.each(rc.DETAILVIEW,function(DETAIL_VIEW_LINK,key,list){ %>
+						<% if (DETAIL_VIEW_LINK.linklabel == ""){ %>
+							<li class="divider"></li>
+						<% }else{ %>
+						<li id="">
+							<a href='<%= DETAIL_VIEW_LINK.linkurl%>' ><%= DETAIL_VIEW_LINK.linkLabelTrans %></a>
+						</li>
+						<% } %>
+						<% }); %>
+					</ul>
+				</span>
+				<% } %>
 			</div>
 		</div>
 	</div>

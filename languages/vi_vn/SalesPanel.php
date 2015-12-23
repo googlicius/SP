@@ -22,6 +22,7 @@ $languageStrings = array(
 	'SalesOrder' =>'Đặt hàng',
 	'Invoice' =>'Hóa đơn',
 	'HelpDesk' =>'Báo hư',
+	'Ticket' =>'Báo hư',
 	'Calendar' =>'Lịch',
 	'Coupons' =>'Thu/chi',
 	'PBXManager' =>'PBX',
@@ -30,12 +31,14 @@ $languageStrings = array(
 	'Accounts' =>'Khách hàng',
 	'Products' =>'Sản phẩm',
 	'Leads' =>'Đầu mối',
+	'Add' =>'Thêm',
 );
 
 $jsLanguageStrings = array(
 	'SalesOrder' =>'Đặt hàng',
 	'Invoice' =>'Hóa đơn',
 	'HelpDesk' =>'Báo hư',
+	'Ticket' =>'Báo hư',
 	'Calendar' =>'Lịch',
 	'Coupons' =>'Thu/chi',
 	'PBXManager' =>'PBX',
@@ -47,4 +50,5 @@ $jsLanguageStrings = array(
 	'Leads' =>'Đầu mối',
 	'Contacts' =>'Liên hệ',
 	'Loading' =>'Đang tải',
+	'Add' =>'Thêm',
 );

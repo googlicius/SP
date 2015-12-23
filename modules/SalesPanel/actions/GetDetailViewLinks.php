@@ -35,13 +35,15 @@ class SalesPanel_GetDetailViewLinks_Action extends Vtiger_Action_Controller{
         	$RELATED_LINK->set('linkId','relatedlink_' . $id);
         	$id++;
 		}
-		foreach ($detailViewLinks['DETAILVIEWBASIC'] as $key => $RELATED_LINK) {
-        	$RELATED_LINK->set('linkLabelTrans',vtranslate($RELATED_LINK->getLabel(),$moduleName));
-        	if($RELATED_LINK->isPageLoadLink()){
-        		$RELATED_LINK->set('isPageLoadLink',true);
-        	}else{
-        		$RELATED_LINK->set('isPageLoadLink',false);
-        	}
+		if(is_array($detailViewLinks['DETAILVIEWBASIC'])){
+			foreach ($detailViewLinks['DETAILVIEWBASIC'] as $key => $RELATED_LINK) {
+	        	$RELATED_LINK->set('linkLabelTrans',vtranslate($RELATED_LINK->getLabel(),$moduleName));
+	        	if($RELATED_LINK->isPageLoadLink()){
+	        		$RELATED_LINK->set('isPageLoadLink',true);
+	        	}else{
+	        		$RELATED_LINK->set('isPageLoadLink',false);
+	        	}
+			}
 		}
 		if(is_array($detailViewLinks['DETAILVIEW'])){
 			foreach ($detailViewLinks['DETAILVIEW'] as $key => $RELATED_LINK) {
