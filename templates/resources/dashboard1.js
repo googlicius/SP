@@ -124,8 +124,24 @@ jQuery.Class('Dashboard',{
 						related_links.push(item.linkurl  + "&linkId=" + item.linkId);
 					});
 				}
-				aDeferred.promise().then(function(){
+				aDeferred.promise().then(function(data){
 					result.result.MODULE = related_params.relatedModule;
+					result.result.PRELOAD_BTNS = {
+						Contacts : [
+							{module : 'SalesOrder',name : 'contact_id'},
+							{module : 'Quotes',name : 'contact_id'},
+							{module : 'HelpDesk',name : 'contact_id'}
+						],
+						Accounts : [
+							{module : 'SalesOrder',name : 'account_id'},
+							{module : 'Quotes',name : 'account_id'},
+							{module : 'HelpDesk',name : 'parent_id'},
+						],
+						SalesOrder : [
+							{module : 'Coupons',name : 'salesorderid'},
+							{module : 'Issuecards',name : 'salesorder_id'}
+						],
+					};
 					//This code is execute after DetailView have been loaded and fill to DOM
 					thisInstance.actionsRender(result.result);
 					thisInstance.relatedView.relatedListRender(result.result);
@@ -135,18 +151,6 @@ jQuery.Class('Dashboard',{
 		},
 
 		actionsRender : function(data){
-			data.PRELOAD_BTNS = {
-				Contacts : [
-					{module : 'SalesOrder',name : 'contact_id'},
-					{module : 'Quotes',name : 'contact_id'},
-					{module : 'HelpDesk',name : 'contact_id'}
-				],
-				Accounts : [
-					{module : 'SalesOrder',name : 'account_id'},
-					{module : 'Quotes',name : 'account_id'},
-					{module : 'HelpDesk',name : 'parent_id'},
-				]
-			};
 			 _.templateSettings.variable = "rc";
 			var template = _.template(jQuery('.detailViewActionsTemplate').html());
 			var actionsHolder = jQuery("#actionsHolder");
@@ -258,10 +262,7 @@ jQuery.Class('Dashboard',{
 				if(DETAILVIEWRELATED){
 					jQuery.each(DETAILVIEWRELATED,function(i,item){
 						content += '<li class="" id="'+ item.linkId +'" data-url="'+ item.linkurl +'" data-label-key="'+ item.linklabel +'" data-link-key="'+ item.linkKey +'" >';
-						content += '<a href="javascript:void(0);" class="textOverflowEllipsis" style="width:auto" title="'+ item.linkLabelTrans +'"><strong>'+ item.linkLabelTrans;
-						if(item.noOfEntries != '-1')
-							content += '( ' + item.noOfEntries + ')';
-						content += '</strong></a>';
+						content += '<a href="javascript:void(0);" class="textOverflowEllipsis" style="width:auto" title="'+ item.linkLabelTrans +'"><strong>'+ item.linkLabelTrans +'</strong></a>';
 						content += '</li>';
 					});
 				}
@@ -378,29 +379,12 @@ jQuery.Class('Dashboard',{
 				alert("Edit instance not registed");
 			}
 			editInstance.registerSubmitEvent = function() {
-				console.log("registerSubmitEvent 4");
+				console.log("registerSubmitEvent");
 				var editViewForm = jQuery("#EditView",editViewPagDiv);
+				//Remove a previously-attached event handler from the editViewForm.
+				//editViewForm.unbind('submit');
 				editViewForm.submit(function(e){
-					console.log("submit in dashboard");
-					if(editViewForm.data('submit') == "true"){
-						var progressInstance = jQuery.progressIndicator();
-						var params = editViewForm.serialize();
-						console.log(editViewForm.serializeArray());
-						AppConnector.request(params).then(function(data){
-							progressInstance.hide();
-							alert("done"); //expect never happen
-						},function(err,error){
-							var parmas_vars = SalesPanel_Statics_Js.getUrlVars(params);
-							if(parmas_vars.record != ''){
-								detail_params = {module: parmas_vars.module,view: 'Detail',record: parmas_vars.record};
-							}else if(typeof parmas_vars.sourceModule != 'undefined' && parmas_vars.sourceModule != ''){
-								detail_params = {module: parmas_vars.sourceModule,view: 'Detail',record: parmas_vars.sourceRecord};
-							}
-							progressInstance.hide();
-							Dashboard.getInstance().detailView.loadDetailView(detail_params);
-						});
-						//end added
-					}
+					console.log("submit 4");
 					return false;
 					
 				});
@@ -424,16 +408,11 @@ jQuery.Class('Dashboard',{
 	},
 
 	listView : {
-		modulesAllowAjaxListView : ['Accounts','Contacts','Quotes','SalesOrder','HelpDesk','Coupons','Products','Invoice'],
-		ListOfListView : {},
-		cvIds : {},
 		// Get current viewname of specific modules
 		getCvIds : function(){
-			var thisInstance = this;
 			var Deferred = jQuery.Deferred();
-			var params = {module: 'SalesPanel',action: 'getViewNames',related_modules: this.modulesAllowAjaxListView}
+			var params = {module: 'SalesPanel',action: 'getViewNames',related_modules: SalesPanel_Statics_Js.specific_related_modules}
 			SalesPanel_Statics_Js.sendRequest(params).then(function(cur_params,result){
-				thisInstance.cvIds = result.result;
 				Deferred.resolve(result.result);
 			},'json');
 			return Deferred.promise();
@@ -475,19 +454,6 @@ jQuery.Class('Dashboard',{
 				SalesPanel_ListView_js.getInstance().registerEvents();
 			});
 
-		},
-		registerLinkHeaderClick : function(){
-			var thisInstance = this;
-			var modulesListContanainer = jQuery(".modulesList");
-			jQuery('li.tabs',modulesListContanainer).on('click',function(e){
-				var href = jQuery(this).find('a').attr('href');
-				var params = SalesPanel_Statics_Js.getUrlVars(href);
-				SalesPanel_Statics_Js.sendRequestPjax(params).then(function(related_params,data){
-					thisInstance.ListOfListView = data;
-
-				});
-				e.preventDefault();
-			});
 		},
 		rowOnclick : function(rowContainer){
 			dashboardInstance = Dashboard.getInstance();
@@ -607,6 +573,7 @@ jQuery.Class('Dashboard',{
 							return this.formElement;
 						}
 					}
+					console.log(thisInstance.jsViewInstance);
 					thisInstance.jsViewInstance.registerEvents();
 					progressInstance.hide();
 					aDeferred.resolve();
@@ -655,8 +622,7 @@ jQuery.Class('Dashboard',{
 		//function to prevent default when click to any links in the view and send via Ajax request insteads
 		ajaxyTheLinks : function(container){
 			dashboardInstance = Dashboard.getInstance();
-			console.log(container);
-			var anchors = container.find('a[href^="index.php"]').not('[href*=ExportPDF]').not('[href*=ExportExcel]');
+			var anchors = container.find('a[href^="index.php"]');
 			anchors.on('click',function(e){
 				//var data_url = (target.length == 1) ? target.attr('href') : jQuery(this).data('recordurl');
 				var data_url = jQuery(this).attr('href');
@@ -667,9 +633,6 @@ jQuery.Class('Dashboard',{
 					dashboardInstance.editView.loadEditView(url_vars);
 				e.preventDefault();
 			});
-
-			//add target blank to PDF and Excel export link
-			container.find('a[href*=ExportPDF],a[href*=ExportExcel]').attr('target','_blank');
 		}
 	},
 
@@ -692,9 +655,9 @@ jQuery.Class('Dashboard',{
 		this.quicklink.registerQuickLinkClick();
 		this.registerCloseTooltipClick();
 		this.registerStateChange();
-		this.listView.getCvIds().then(function(data){
-//			thisInstance.listView.loadList(data);
-		});
+	/*	this.listView.getCvIds().then(function(data){
+			thisInstance.listView.loadList(data);
+		});*/
 		
 		var captureGlobalSearchCheckboxVal = this.checkBox.getCheckBoxLocalStorage();
 

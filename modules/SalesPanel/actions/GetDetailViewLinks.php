@@ -54,11 +54,30 @@ class SalesPanel_GetDetailViewLinks_Action extends Vtiger_Action_Controller{
 			foreach ($detailViewLinks['DETAILVIEWRELATED'] as $key => $RELATED_LINK) {
 				$RELATED_LINK->set('linkLabelTrans',vtranslate($RELATED_LINK->getLabel(),$moduleName));
 				$RELATED_LINK->set('linkId','relatedlink_' . $id);
+				$relatedModuleName = $RELATED_LINK->get('relatedModuleName');
+				//$noOfEntries = $this->getNoOfEntries($request,$relatedModuleName);
+				$RELATED_LINK->set('noOfEntries',-1);
 	        	$id++;
 			}
 		}
 		$response = new Vtiger_Response();
 		$response->setResult($detailViewLinks);
 		$response->emit();
+	}
+
+	function getNoOfEntries($request, $relatedModuleName){
+		$pagingModel = new Vtiger_Paging_Model();
+		$pagingModel->set('page',1);
+		$recordId = $request->get('relatedRecord');
+		$moduleName = $request->get('relatedModule');
+		$allowCountModules = array('Contacts','Accounts','Quotes','SalesOrder','Invoice','HelpDesk','Coupons','Calendar');
+		if(in_array($relatedModuleName, $allowCountModules)){
+			$parentRecordModel = Vtiger_Record_Model::getInstanceById($recordId, $moduleName);
+			$relationListView = Vtiger_RelationListView_Model::getInstance($parentRecordModel, $relatedModuleName);
+			$models = $relationListView->getEntries($pagingModel);
+			$noOfEntries = count($models);
+			return $noOfEntries;
+		}
+		return -1;
 	}
 }

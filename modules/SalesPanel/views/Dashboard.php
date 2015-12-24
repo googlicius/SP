@@ -30,6 +30,9 @@ class SalesPanel_Dashboard_View extends Vtiger_Index_View {
 			'layouts.vlayout.modules.' .$request->getModule() . '.resources.dashboard',
 			'layouts.vlayout.modules.' .$request->getModule() . '.resources.jquery-tzCheckbox.jquery-tzCheckbox',
 			'layouts.vlayout.modules.Vtiger.resources.Detail',
+			'layouts.vlayout.modules.Vtiger.resources.Edit',
+			'layouts.vlayout.modules.Inventory.resources.Detail',
+			'layouts.vlayout.modules.Inventory.resources.Edit',
 		);
 
 		$jsFileNames[] = $modulePopUpFile;
