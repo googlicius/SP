@@ -126,6 +126,21 @@ jQuery.Class('Dashboard',{
 				}
 				aDeferred.promise().then(function(data){
 					result.result.MODULE = related_params.relatedModule;
+					result.result.PRELOAD_BTNS = {
+						Contacts : [
+							{module : 'SalesOrder',name : 'contact_id'},
+							{module : 'Quotes',name : 'contact_id'},
+							{module : 'HelpDesk',name : 'contact_id'}
+						],
+						Accounts : [
+							{module : 'SalesOrder',name : 'account_id'},
+							{module : 'Quotes',name : 'account_id'},
+							{module : 'HelpDesk',name : 'parent_id'}
+						],
+						SalesOrder : [
+							{module : 'Coupons',name : 'related_orders'}
+						],
+					};
 					//This code is execute after DetailView have been loaded and fill to DOM
 					thisInstance.actionsRender(result.result);
 					thisInstance.relatedView.relatedListRender(result.result);
@@ -320,6 +335,17 @@ jQuery.Class('Dashboard',{
 			dashboardInstance.view.setModule(url_vars.module);
 			dashboardInstance.view.setView(url_vars.view);
 			//dashboardInstance.view.setRecordId(url_vars.record); // create new, not store record.
+
+			//pushState url
+			var vars = [];
+			jQuery.each(url_vars,function(i,item){
+				var url_part = i + "=" + item;
+				vars.push(url_part);
+			});
+			var url = vars.join("&");
+			url = "index.php?" + url;
+			var obj = {Page: url,Url : url}
+			history.pushState(obj,obj.Page,obj.Url);
 			this.pending = false;
 			//Load js files of current view of this view
 			dashboardInstance.view.loadJsOfCurrentView(url_vars);
@@ -344,10 +370,8 @@ jQuery.Class('Dashboard',{
 			editlInstance = Vtiger_Edit_Js.getInstance();
 			editlInstance.registerSubmitEvent = function() {
 				var editViewForm = jQuery("#EditView",editViewPagDiv);
-				//console.log(editViewPagDiv);
 				//Remove a previously-attached event handler from the editViewForm.
 				editViewForm.unbind('submit');
-				console.log(editViewForm);
 				editViewForm.submit(function(e){
 					//Form should submit only once for multiple clicks also
 					if(typeof editViewForm.data('submit') != "undefined") {
@@ -371,10 +395,12 @@ jQuery.Class('Dashboard',{
 									alert("done"); //expect never happen
 								},function(err,error){
 									var parmas_vars = SalesPanel_Statics_Js.getUrlVars(params);
-									if(typeof parmas_vars.record != 'undefined'){
+									if(parmas_vars.record != ''){
 										detail_params = {module: parmas_vars.module,view: 'Detail',record: parmas_vars.record};
-										Dashboard.getInstance().detailView.loadDetailView(detail_params);
+									}else if(typeof parmas_vars.sourceModule != 'undefined' && parmas_vars.sourceModule != ''){
+										detail_params = {module: parmas_vars.sourceModule,view: 'Detail',record: parmas_vars.sourceRecord};
 									}
+									Dashboard.getInstance().detailView.loadDetailView(detail_params);
 								});
 								e.preventDefault();
 								//end added
@@ -563,7 +589,7 @@ jQuery.Class('Dashboard',{
 					}else if(related_params.view == 'Edit'){
 						Vtiger_Edit_Js.editlInstance = false;
 						thisInstance.jsViewInstance = Vtiger_Edit_Js.getInstance();
-						// because container of Edit view has been reload to DOM and then we rewrite the getForm function of Vtiger_Edit_Js instance
+						// because container of Edit view has been reload to DOM and then we must rewrite the getForm function of Vtiger_Edit_Js instance
 						thisInstance.jsViewInstance.getForm = function(){
 							this.setForm(jQuery('#EditView'));
 							return this.formElement;

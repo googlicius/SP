@@ -57,32 +57,15 @@
 		<div class="pull-right detailViewButtoncontainer">
 			<div class="btn-toolbar">
 				<div class="preloadEditViewBtnsHolder">
-				<% if(rc.MODULE == 'Accounts' || rc.MODULE == 'Contacts') { %>
-					<span class="btn-group" data-module="SalesOrder" data-name="account_id">
-						<a class="btn btn-default preload_SalesOrder" disabled="disabled"
+				<% if(typeof rc.PRELOAD_BTNS[rc.MODULE] != 'undefined') { %>
+					<% _.each(rc.PRELOAD_BTNS[rc.MODULE],function(PRELOAD_BTN,key,list){ %>
+					<span class="btn-group" data-module="<%= PRELOAD_BTN.module %>" data-name="<%= PRELOAD_BTN.name %>">
+						<a class="btn btn-default preload_<%= PRELOAD_BTN.module %>" disabled="disabled"
 							href='javascript:;'>
-							<strong>{vtranslate('Add',$MODULE_NAME)} {vtranslate('SalesOrder',$MODULE_NAME)|lower}</strong>
+							<strong>{vtranslate('Add',$MODULE_NAME)} <%= app.vtranslate(PRELOAD_BTN.module) %></strong>
 						</a>
 					</span>
-					<span class="btn-group" data-module="Quotes" data-name="account_id">
-						<a class="btn btn-default preload_Quotes" disabled="disabled"
-							href='javascript:;'>
-							<strong>{vtranslate('Add',$MODULE_NAME)} {vtranslate('Quotes',$MODULE_NAME)|lower}</strong>
-						</a>
-					</span>
-					<span class="btn-group" data-module="HelpDesk" data-name="parent_id">
-						<a class="btn btn-default preload_HelpDesk" disabled="disabled"
-							href='javascript:;'>
-							<strong>{vtranslate('Add',$MODULE_NAME)} {vtranslate('Ticket',$MODULE_NAME)|lower}</strong>
-						</a>
-					</span>
-				<% }else if(rc.MODULE == 'SalesOrder'){ %>
-					<span class="btn-group" data-module="Coupons" data-name="salesorderid">
-						<a class="btn btn-default preload_Coupons" disabled="disabled"
-							href='javascript:;'>
-							<strong>{vtranslate('Add',$MODULE_NAME)} {vtranslate('Coupons',$MODULE_NAME)|lower}</strong>
-						</a>
-					</span>
+					<% }) %>
 				<% } %>
 				</div>
 				<% _.each(rc.DETAILVIEWBASIC,function(DETAIL_VIEW_BASIC_LINK,key,list){ %>
