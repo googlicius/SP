@@ -1,1 +1,0 @@
-SearchPanel.tpl

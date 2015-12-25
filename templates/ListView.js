@@ -39,7 +39,7 @@ Vtiger_List_Js('SalesPanel_ListView_js',{
 		this.CvIds = data;
 	},
 
-	getDefaultParams : function() {
+	/*getDefaultParams : function() {
 		var params = this.getDefaultParams2();
 
 		var moduleName = SalesPanel_ListView_js.getSelectedModule();
@@ -77,7 +77,7 @@ Vtiger_List_Js('SalesPanel_ListView_js',{
 		}
 		
 		return params;
-	},
+	},*/
 
 	loadPagingTemplate : function(){
 		var template = '';

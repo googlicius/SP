@@ -304,7 +304,6 @@ jQuery.Class('Dashboard',{
 	editView : {
 		pending : false, // prevent double click
 		loadEditView : function(url_vars,isAjax){
-			console.log(this.pending);
 			var thisInstance = this;
 			if(this.pending == true) return;
 			this.pending = true;
@@ -341,15 +340,7 @@ jQuery.Class('Dashboard',{
 			//dashboardInstance.view.setRecordId(url_vars.record); // create new, not store record.
 
 			//pushState url
-			var vars = [];
-			jQuery.each(url_vars,function(i,item){
-				var url_part = i + "=" + item;
-				vars.push(url_part);
-			});
-			var url = vars.join("&");
-			url = "index.php?" + url;
-			var obj = {Page: url,Url : url}
-			history.pushState(obj,obj.Page,obj.Url);
+			SalesPanel_Statics_Js.pushHistory(url_vars);
 			this.pending = false;
 			//Load js files of current view of this view
 			dashboardInstance.view.loadJsOfCurrentView(url_vars).then(function(){
@@ -438,7 +429,7 @@ jQuery.Class('Dashboard',{
 			},'json');
 			return Deferred.promise();
 		},
-		loadList : function(data){
+		/*loadList : function(data){
 			var quickLinksContainer = jQuery(".quickLinksDiv");
 			var listViewInstance = SalesPanel_ListView_js.getInstance();
 			Dashboard.getInstance().quicklink.injectDataAttrib();
@@ -449,8 +440,46 @@ jQuery.Class('Dashboard',{
 				listViewInstance.cvId = cvId;
 				listViewInstance.getListViewRecords2({page:"1"});
 			});
+		},*/
+
+		loadListView : function(params){
+			var thisInstance = this;
+			var dashboardInstance = Dashboard.getInstance();
+			dashboardInstance.view.setModule(params.module);
+			dashboardInstance.view.setView(params.view);
+
+			var aDeferred = jQuery.Deferred();
+			var bDeferred = jQuery.Deferred();
+
+			/*if(SalesPanel_Statics_Js.checkStorageSupport()){
+				thisInstance.ListOfListView = ( sessionStorage.getItem('ListOfListView') == null ) ? {} : sessionStorage.getItem('ListOfListView');
+			}*/
+
+			if(typeof thisInstance.ListOfListView[params.module] == 'undefined'){
+				var progressInstance = jQuery.progressIndicator();
+				SalesPanel_Statics_Js.sendRequestPjax(params).then(function(related_params,data){
+					aDeferred.resolve(data);
+				});
+
+				var CustomViewParams = {module : 'SalesPanel',view : 'CustomView', relatedModule : app.getModuleName()};
+				SalesPanel_Statics_Js.sendRequest(CustomViewParams).then(function(related_params,data){
+					bDeferred.resolve(data);
+				});
+
+				jQuery.when(aDeferred,bDeferred).done(function(listViewData,customViewData){
+					thisInstance.ListOfListView[params.module] = {};
+					thisInstance.ListOfListView[params.module].listViewData = listViewData;
+					thisInstance.ListOfListView[params.module].customViewData = customViewData;
+					thisInstance.listViewRender(params.module,"- " + app.vtranslate('List') + " " + app.vtranslate(params.module));
+					progressInstance.hide();
+				});
+			}else{
+				var data = thisInstance.ListOfListView[params.module];
+				thisInstance.listViewRender(params.module,"- " + app.vtranslate('List') + " " + app.vtranslate(params.module));
+				SalesPanel_Statics_Js.pushHistory(params);
+			}
 		},
-		listViewRender : function(data,title){
+		listViewRender : function(module,title){
 			var listViewContentsContainer = jQuery('div.listViewPageDiv');
 			var titleViewContainer = jQuery(".titleViewHolder");
 			var pagingTemplate = jQuery("#PagingTemplate").html();
@@ -458,23 +487,15 @@ jQuery.Class('Dashboard',{
 			var thisInstance = this;
 
 			dashboardInstance.view.resetAll();
-			if(typeof data === 'undefined'){
-				data = '<strong>' + app.vtranslate('Loading') + '...</strong>';
-				dashboardInstance.view.render(data,listViewContentsContainer);
-				dashboardInstance.view.render(title,titleViewContainer);
-				return;
-			}
-
-			jQuery.get(dashboardInstance.htmlTemplateFolder + 'PagingTemplate.phtml',function(templateData){
-				dashboardInstance.view.render(data,listViewContentsContainer);
-				dashboardInstance.view.render(title,titleViewContainer);
-				dashboardInstance.view.renderActions(templateData);
-				thisInstance.rowOnclick(jQuery('tr.listViewEntries',listViewContentsContainer));
-				
-				SalesPanel_ListView_js.getInstance().registerEventsAfterRenderListViewToDOM(data);
-				SalesPanel_ListView_js.getInstance().registerEvents();
-			});
-
+			var listViewData = thisInstance.ListOfListView[module].listViewData;
+			var customViewData = thisInstance.ListOfListView[module].customViewData;
+			dashboardInstance.view.render(listViewData,listViewContentsContainer);
+			dashboardInstance.view.render(title,titleViewContainer);
+			dashboardInstance.view.renderActions(customViewData);
+			thisInstance.rowOnclick(jQuery('tr.listViewEntries',listViewContentsContainer));
+			
+			SalesPanel_ListView_js.getInstance().registerEventsAfterRenderListViewToDOM(listViewData);
+			SalesPanel_ListView_js.getInstance().registerEvents();
 		},
 		registerLinkHeaderClick : function(){
 			var thisInstance = this;
@@ -482,10 +503,16 @@ jQuery.Class('Dashboard',{
 			jQuery('li.tabs',modulesListContanainer).on('click',function(e){
 				var href = jQuery(this).find('a').attr('href');
 				var params = SalesPanel_Statics_Js.getUrlVars(href);
-				SalesPanel_Statics_Js.sendRequestPjax(params).then(function(related_params,data){
-					thisInstance.ListOfListView = data;
 
-				});
+				//Only support modules have List view
+				if(params.view != 'List'){
+					Vtiger_Helper_Js.showPnotify({title:'Message',text:app.vtranslate('Cache only support modules have List view'),width:'300px'});
+					return;
+				} 
+
+				modulesListContanainer.find('.selected2').removeClass('selected2');
+				jQuery(this).addClass('selected2');
+				thisInstance.loadListView(params);
 				e.preventDefault();
 			});
 		},
@@ -683,6 +710,8 @@ jQuery.Class('Dashboard',{
 				thisInstance.detailView.loadDetailView(url_vars,true);
 			else if(url_vars.view == 'Edit')
 				thisInstance.editView.loadEditView(url_vars,true);
+			else if(url_vars.view == 'List')
+				thisInstance.listView.loadListView(url_vars,true);
 		};
 	},
 
@@ -692,9 +721,10 @@ jQuery.Class('Dashboard',{
 		this.quicklink.registerQuickLinkClick();
 		this.registerCloseTooltipClick();
 		this.registerStateChange();
-		this.listView.getCvIds().then(function(data){
-//			thisInstance.listView.loadList(data);
-		});
+		this.listView.registerLinkHeaderClick();
+		/*this.listView.getCvIds().then(function(data){
+			thisInstance.listView.loadList(data);
+		});*/
 		
 		var captureGlobalSearchCheckboxVal = this.checkBox.getCheckBoxLocalStorage();
 

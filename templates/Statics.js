@@ -22,6 +22,26 @@ jQuery.Class("SalesPanel_Statics_Js",{
 		return vars;
 	},
 
+	// function to push history from object output from getUrlVars function
+	pushHistory : function(url_vars){
+		var vars = [];
+		jQuery.each(url_vars,function(i,item){
+			var url_part = i + "=" + item;
+			vars.push(url_part);
+		});
+		var url = vars.join("&");
+		url = "index.php?" + url;
+		var obj = {Page: url,Url : url}
+		history.pushState(obj,obj.Page,obj.Url);
+	},
+
+	checkStorageSupport : function(){
+		if( typeof Storage !== 'undefined'){
+			return true;
+		}
+		return false;
+	},
+
 	/*getScript : function(view,module){
 		var moduleClassName = 'Vtiger_' + view + '_Js';
 		if(typeof window[moduleClassName] != 'undefined')
