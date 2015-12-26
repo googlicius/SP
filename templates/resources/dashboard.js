@@ -588,6 +588,7 @@ jQuery.Class('Dashboard',{
 		},
 		resetAll : function(){
 			jQuery("#actionsHolder,#titleViewHolder,#contentViewHolder,.listViewPageDiv,.detailViewContainer,.editViewContainer").html('');
+			jQuery(".mainContainer,#leftPanel,#rightPanel").removeStyle('min-height');
 		},
 		//Load javascript file for specific view
 		loadJs : function(module,view){
