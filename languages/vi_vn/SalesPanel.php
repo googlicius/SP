@@ -32,6 +32,8 @@ $languageStrings = array(
 	'Products' =>'Sản phẩm',
 	'Leads' =>'Đầu mối',
 	'Add' =>'Thêm',
+	'Search' =>'Tìm kiếm',
+	'Search by phone' =>'Tìm theo số điện thoại',
 );
 
 $jsLanguageStrings = array(
@@ -51,4 +53,7 @@ $jsLanguageStrings = array(
 	'Contacts' =>'Liên hệ',
 	'Loading' =>'Đang tải',
 	'Add' =>'Thêm',
+	'Phone' =>'Điện thoại',
+	'Other Phone' =>'Số điện thoại khác',
+	'Address' =>'Địa chỉ',
 );

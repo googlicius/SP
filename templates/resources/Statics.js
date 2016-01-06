@@ -126,6 +126,25 @@ jQuery.Class("SalesPanel_Statics_Js",{
 
 		$.pjax(params);
 		return Deferred.promise();
+	},
+	
+	htmlEscape : function (str) {
+		return String(str)
+		.replace(/&/g, '&amp;')
+		.replace(/"/g, '&quot;')
+		.replace(/'/g, '&#39;')
+		.replace(/</g, '&lt;')
+		.replace(/>/g, '&gt;');
+	},
+
+	// I needed the opposite function today, so adding here too:
+	htmlUnescape :function (value){
+		return String(value)
+		.replace(/&quot;/g, '"')
+		.replace(/&#39;/g, "'")
+		.replace(/&lt;/g, '<')
+		.replace(/&gt;/g, '>')
+		.replace(/&amp;/g, '&');
 	}
 },{});
 
@@ -139,8 +158,7 @@ jQuery(document).ready(function(){
 		}));
 
 		return $.when.apply($, _arr);
-	};
-
+	}
 	$.fn.removeStyle = function(style){
 		var search = new RegExp(style + '[^;]+;?', 'g');
 
