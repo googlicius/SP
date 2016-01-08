@@ -4,20 +4,33 @@
 
 class SalesPanel_Dashboard_View extends Vtiger_Index_View {
 
-     public function process(Vtiger_Request $request) {
-     	$current_user_model = Users_Record_Model::getCurrentUserModel();
+	public function process(Vtiger_Request $request) {
+		$current_user_model = Users_Record_Model::getCurrentUserModel();
 
 
-        $viewer = $this->getViewer($request);
-        $viewer->assign('MODULE_NAME', $request->getModule());
-        $viewer->assign('NOW', date('d-m-Y'));
-        $viewer->assign('FIRST_DAY_OF_MONTH', date('01-m-Y'));
-       
-        $viewer->assign('CURRENT_USER_MODEL', $current_user_model);
-        $viewer->view('Dashboard.tpl', $request->getModule());
-    }
+		$viewer = $this->getViewer($request);
+		$viewer->assign('MODULE_NAME', $request->getModule());
+		$viewer->assign('NOW', date('d-m-Y'));
+		$viewer->assign('FIRST_DAY_OF_MONTH', date('01-m-Y'));
 
-    function getHeaderScripts(Vtiger_Request $request) {
+		$viewer->assign('CURRENT_USER_MODEL', $current_user_model);
+		//$this->createCustomLessFile();
+		$viewer->view('Dashboard.tpl', $request->getModule());
+	}
+
+	/*function createCustomLessFile(){
+		global $root_directory;
+		$lessContent = "
+		@import '" . Vtiger_Theme::getCurrentUserThemePath() . "/variables.less';
+
+		.nav.massEditTabs li.active2 a {background: @baseThemeColor;color: #ffffff;margin-left: 10px;}";
+
+		$file = fopen($root_directory . "SalesPanel.less","w");
+		fwrite($file,$lessContent);
+		fclose($file);
+	}*/
+
+	function getHeaderScripts(Vtiger_Request $request) {
 		$headerScriptInstances = parent::getHeaderScripts($request);
 
 		$moduleName = $request->getModule();

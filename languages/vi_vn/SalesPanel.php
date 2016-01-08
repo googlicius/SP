@@ -56,4 +56,5 @@ $jsLanguageStrings = array(
 	'Phone' =>'Điện thoại',
 	'Other Phone' =>'Số điện thoại khác',
 	'Address' =>'Địa chỉ',
+	'Cache only support modules have List view' =>'Cache chỉ hỗ trợ cho những module có kiểu xem danh sách',
 );

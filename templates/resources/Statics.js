@@ -148,6 +148,8 @@ jQuery.Class("SalesPanel_Statics_Js",{
 	}
 },{});
 
+
+// Add some extras function to expand feature for jQuery
 jQuery(document).ready(function(){
 	$.getMultiScripts = function(arr) {
 		var _arr = $.map(arr, function(scr) {

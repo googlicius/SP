@@ -62,6 +62,7 @@
 		 border-bottom: 0px;
 	}
 </style>
+
 <div class="container-fluid">
 	<div class="row-fluid">
 		<div class="span8">
@@ -97,6 +98,7 @@
 			</div>
 		</div>
 		<!-- <div class="detailHorizolRelatedViewContainer horizolRelatedMenu"></div> -->
+		<input id="recordId" type="hidden">
 		<div class="detailViewContainer" style="padding:0px"></div>
 		<div class="editViewPagDiv" style="padding:0px"></div>
 		<div class="jsHolder"></div>
@@ -108,7 +110,6 @@
 </div>
 
 <div class="hide" id="detailViewInfoHidden_withHorizolRelatedMenu">
-	<input id="recordId" type="hidden">
 	<div class="detailViewInfo horizolRelatedMenu row-fluid">
 		<div class="related horizon-related span12 marginLeftZero">{vtranslate('Loading',$MODULE_NAME)}...</div>
 		<div class="layoutContent span12 marginLeftZero"></div>
@@ -122,13 +123,14 @@
 </div>
 
 <div class="hide" id="detailViewInfoHidden">
-	<input id="recordId" type="hidden">
 	<div class="detailViewInfo row-fluid">
 		<div class="layoutContent span12 marginLeftZero"></div>
 		<div class="span10 details marginLeftZero">
 			<form id="detailView">
 				<input type="hidden" name="picklistDependency" value="[]">
-				<div class="contents"></div>
+				<div class="contents">
+					<div class="secondTitleViewHolder"></div>
+				</div>
 			</form>
 		</div>
 		<div class="related span2 marginLeftZero">{vtranslate('Loading',$MODULE_NAME)}...</div>
@@ -190,10 +192,20 @@
 		</span>
 		<span class="span11">
 			<span class="account_name" style="font-size:18px;font-weight:700"><%= rc.primary %></span>
+			<% if(Object.keys(rc.sub_title).length > 0){ %>
+			<hr>
+			<% } %>
 			<span class="row-fluid">
-				<% _.each(rc.sub_title,function(item,key,list){ %>					
-					<span class="<%= key %>" style="white-space:nowrap"><strong><%= item.fieldLabel %></strong>: <%= item.fieldValue %></span>
-				<% }); %>
+				<table>
+					<tbody>
+					<% _.each(rc.sub_title,function(item,key,list){ %>
+						<tr class="<%= key %>">
+							<td style="vertical-align: initial;"> <strong><%= item.fieldLabel %></strong></td>
+							<td style="padding-left: 5px"> <%= item.fieldValue %></td>
+						</tr>
+					<% }); %>
+					</tbody>
+				</table>
 			</span>
 		</span>
 	</div>

@@ -101,64 +101,47 @@ jQuery.Class('Dashboard',{
 
 		//primary field name of each module
 		module_name_fields : {
-			'Accounts'		: {'primary_field': ['accountname'], 'sub_fields': ['bill_street','otherphone','phone'],'image':'summary_organizations.png'},
-			'Contacts'		: {'primary_field': ['firstname','lastname'], 'sub_fields': ['mobile','otherphone','mailingstreet'],'image':'summary_Contact.png'},
-			'Quotes'		: {'primary_field': ['subject'], 'sub_fields': [],'image':''},
-			'SalesOrder'	: {'primary_field': ['subject'], 'sub_fields': [],'image':''},
-			'PurchasesOrder': {'primary_field': ['subject'], 'sub_fields': [],'image':''},
-			'Invoice'		: {'primary_field': ['subject'], 'sub_fields': [],'image':''},
-			'Issuecards'	: {'primary_field': ['issuecards_no'], 'sub_fields': [],'image':''},
-			'Receiptcards'	: {'primary_field': ['receiptcards_no'], 'sub_fields': [],'image':''},
-			'HelpDesk'		: {'primary_field': ['ticket_title'], 'sub_fields': [],'image':''},
-			'Leads'			: {'primary_field': ['firstname','lastname'], 'sub_fields': [],'image':''},
-			'Potentials'	: {'primary_field': ["potentialname"], 'sub_fields': [],'image':''},
-			'Products'		: {'primary_field': ["productname"], 'sub_fields': [],'image':''},
-			'Coupons'		: {'primary_field': ["couponname"], 'sub_fields': [],'image':''},
-			'Vendors'		: {'primary_field': ["vendorname"], 'sub_fields': [],'image':''},
+			'Accounts'		: {'sub_fields': ['phone','otherphone','email1','bill_street'],'image':'summary_organizations.png'},
+			'Contacts'		: {'sub_fields': ['account_id','mobile','otherphone','mailingstreet'],'image':'summary_Contact.png'},
+			'HelpDesk'		: {'sub_fields': [],'image':'summary_Tickets.png'},
+			'Leads'			: {'sub_fields': [],'image':'summary_Leads.png'},
 		},
 
-		/*buildTitle(module){
-			var fields_name = this.module_name_fields[module].primary_field;
-			var detailViewContainer = this.getDetailViewContainer();
-			var detailViewContents = detailViewContainer.find('.contents');
-			console.log(detailViewContents);
-			var title = '';
-			for (var i = 0; i < fields_name.length; i++) {
-				title += jQuery('[name="' + fields_name[i] + '"]').val();
-			};
-			return title;
-		},*/
-		buildTitle(module){
-			var primary_fields = this.module_name_fields[module].primary_field;
-			var sub_fields = this.module_name_fields[module].sub_fields;
-			var image = this.module_name_fields[module].image;
-			var title = {'primary':'','sub_title':{}};
-			
+		buildTitle : function(detailViewData){
+			var module = app.getModuleName();
+			var title = {'primary':'','sub_title':{},'image':''};
+
+			var columnFields = detailViewData.columnFields;
+			var nameFields = detailViewData.nameFields;
+			var fieldLabels = detailViewData.fieldLabels;
+
 			//build Primary title
-			for (var i = 0; i < primary_fields.length; i++) {
-				if(typeof jQuery('[name="' + primary_fields[i] + '"]').val() != 'undefined'){
-					title.primary += jQuery('[name="' + primary_fields[i] + '"]').val();
+			for (var i = 0; i < nameFields.length; i++) {
+				if(columnFields[nameFields[i]] != ''){
+					title.primary += " " + columnFields[nameFields[i]];
 				}
 			};
+			
 			//build sub title
-			for (var i = 0; i < sub_fields.length; i++) {
-				var fieldLabel = jQuery('[name="' + sub_fields[i] + '"]').closest('tr').find('td.fieldLabel > label').html();
-				var fieldValue = jQuery('[name="' + sub_fields[i] + '"]').closest('td.fieldValue').find('span[class="value"]').html();
-				if(fieldLabel != null && fieldValue != null){
-					title.sub_title[sub_fields[i]] = {};
-					title.sub_title[sub_fields[i]].fieldLabel = fieldLabel;
-					title.sub_title[sub_fields[i]].fieldValue = fieldValue;
-				}
-			};
-			console.log(title.sub_title);
+			if(typeof this.module_name_fields[module] != 'undefined'){
+				var sub_fields = this.module_name_fields[module].sub_fields;
+				for (var i = 0; i < sub_fields.length; i++) {
+					var fieldLabel = fieldLabels[sub_fields[i]];
+					var fieldValue = columnFields[sub_fields[i]];
+					if(fieldLabel != null && fieldValue != ''){
+						title.sub_title[sub_fields[i]] = {'fieldLabel': fieldLabel,'fieldValue': fieldValue};
+					}
+				};
+
+				var image = this.module_name_fields[module].image;
+				title.image = 'layouts/vlayout/skins/images/'+ image;
+			}
 			if(title.primary == ''){
 				title.primary = app.vtranslate('Detail') + " " + app.vtranslate(module);
 			}
-			if(image != ''){
-				title.image = 'layouts/vlayout/skins/images/'+ image;
-			}
 			return title;
 		},
+
 		loadDetailView : function(url_vars,isPjax){
 			var thisInstance = this;
 			if(this.pending == true) return;
@@ -171,49 +154,48 @@ jQuery.Class('Dashboard',{
 			params.mode = "showDetailViewByMode";
 			params.requestMode = "sumary";
 
-			//Get detailview content
 			var aDeferred = jQuery.Deferred();
+			var bDeferred = jQuery.Deferred();
+
 			var functionTarget = (typeof isPjax != 'undefined' && isPjax == true) ? 'sendRequest' : 'sendRequestPjax';
+
+			//Get detailview CONTENT
 			SalesPanel_Statics_Js[functionTarget](params).then(function(related_params,result){
+				aDeferred.resolve(result);
 				dashboardInstance.view.setModule(related_params.module);
-				thisInstance.detaiViewRender(result, thisInstance.buildTitle(related_params.module));
+				console.log(related_params.module);
 				dashboardInstance.view.setView(related_params.view);
 				dashboardInstance.view.setRecordId(related_params.record);
-				aDeferred.resolve();
-				progressInstance.hide();
-				thisInstance.pending = false;
-
 				//Load js files of current view of this view
 				dashboardInstance.view.loadJsOfCurrentView(related_params);
+				thisInstance.pending = false;
 			});
 
-			//Get detailview links
-			var params2 = {module: 'SalesPanel',action: 'GetDetailViewLinks', relatedModule : params.module, relatedRecord: params.record};
+			//Get detailview DATA
+			var params2 = {module: 'SalesPanel',action: 'GetDetailView', relatedModule : params.module, relatedRecord: params.record};
 			SalesPanel_Statics_Js.sendRequest(params2).then(function(related_params,result){
-				var related_links = [];
-				var DETAILVIEWTAB = result.result.DETAILVIEWTAB;
-				var DETAILVIEW = result.result.DETAILVIEW;
-				//console.log(result.result);
-				var DETAILVIEWRELATED = result.result.DETAILVIEWRELATED;
+				bDeferred.resolve(result.result);
+			});
 
-				jQuery.each(DETAILVIEWTAB,function(i,item){
-					related_links.push(SalesPanel_Statics_Js.htmlEscape(item.linkurl + "&linkId=" + item.linkId));
-				});
-				jQuery.each(DETAILVIEW,function(i,item){
-					item.linkurl = SalesPanel_Statics_Js.htmlEscape(item.linkurl);
-				});
-				if(DETAILVIEWRELATED){
-					jQuery.each(DETAILVIEWRELATED,function(i,item){
-						related_links.push(SalesPanel_Statics_Js.htmlEscape(item.linkurl  + "&linkId=" + item.linkId));
-					});
-				}
-				aDeferred.promise().then(function(){
-					result.result.MODULE = related_params.relatedModule;
-					//This code is execute after DetailView have been loaded and fill to DOM
-					thisInstance.actionsRender(result.result);
-					thisInstance.relatedView.relatedMenuRender(result.result);
-				});
-				//thisInstance.relatedView.loadList(related_links);
+			/**
+			 * RENDER TO DOM
+			 * @sumaryHTML <HTML string> ready render to DOM
+			 * @detailViewData <Object> infomartion about current View: links, columFields, Fields Title
+			 */
+			jQuery.when(aDeferred,bDeferred).then(function(sumaryHTML,detailViewData){
+				var module = app.getModuleName();
+				console.log(module);
+				// RENDER CONTENT
+				thisInstance.detaiViewRender(sumaryHTML, thisInstance.buildTitle(detailViewData));
+
+				//RENDER RELATED MENU
+				var detailViewLinks = detailViewData.detailViewLinks;
+				detailViewLinks.MODULE = module;
+				//This code is execute after DetailView have been loaded and fill to DOM
+				thisInstance.actionsRender(detailViewLinks);
+				thisInstance.relatedView.relatedMenuRender(detailViewLinks);
+
+				progressInstance.hide();
 			});
 		},
 
@@ -225,10 +207,9 @@ jQuery.Class('Dashboard',{
 			var ListItems = jQuery('li',relatedContainer);
 			var offset = [];
 
-			var firstItem = ListItems[Object.keys(ListItems)[0]];
+			var firstItem = ListItems[Object.keys(ListItems)[1]];
 			var firstOffset = jQuery(firstItem).offset().top;
 			var ListItemsInDropDownMenu = [];
-
 			//If 
 			ListItems.each(function(i,item){
 				var thisOffset = jQuery(this).offset().top;
@@ -260,29 +241,6 @@ jQuery.Class('Dashboard',{
 
 			this.relatedMenuIsHorizol = false;
 		},
-
-		/*setHardInfo : function(){
-			var accountHardInfoTemplate = jQuery(".accountHardInfoTemplate");
-			var detailViewForm = jQuery("#detailView");
-			var account_hard_info_holder = jQuery("#sub_title_holder");
-			var phone_field = [{name:'phone',label:'Phone'},{name:'otherphone',label:'Other Phone'}];
-			var data = {
-				accountname : detailViewForm.find('[name="accountname"]').val()				
-			};
-			jQuery.each(phone_field,function(i,item){
-				if(detailViewForm.find('[name="' + item.name + '"]').length !== 0 && detailViewForm.find('[name="' + item.name + '"]').val() != ''){
-					var fieldValue = detailViewForm.find('[name="' + item.name + '"]').closest('td.fieldValue');
-					var phone_label = fieldValue.find('span[class="value"]').html();
-					data[item.name] = " - <strong>" + app.vtranslate(item.label) + "</strong>: " + phone_label;
-				}
-			});
-			if(detailViewForm.find('[name="bill_street"]').length != 0 && detailViewForm.find('[name="bill_street"]') != ''){
-				data.address = " - <strong>" + app.vtranslate('Address') + "</strong>: " + detailViewForm.find('[name="bill_street"]').val();
-			}
-			_.templateSettings.variable = "rc";
-			var template = _.template(jQuery('.accountHardInfoTemplate').html());
-			account_hard_info_holder.html(template(data));
-		},*/
 
 		actionsRender : function(data){
 			data.PRELOAD_BTNS = {
@@ -339,7 +297,6 @@ jQuery.Class('Dashboard',{
 			var dashboardInstance = Dashboard.getInstance();
 			var detailViewContainer = this.getDetailViewContainer();
 			var horizonRelatedMenuClone = jQuery("#horizonRelatedMenuClone");
-			var titleViewContainer = jQuery(".titleViewHolder");
 			// get and save horizonRelatedMenu before it being removed by resetAll
 			if(this.relatedMenuIsHorizol == false){
 				horizonRelatedMenuClone.html(jQuery('.horizon-related',detailViewContainer));
@@ -349,17 +306,26 @@ jQuery.Class('Dashboard',{
 			dashboardInstance.view.resetAll();
 
 			if(this.relatedMenuIsHorizol == true){
-				var detailviewTemplate = jQuery('#detailViewInfoHidden_withHorizolRelatedMenu');				
+				var detailviewTemplate = jQuery('#detailViewInfoHidden_withHorizolRelatedMenu');
+				var titleViewContainer = jQuery(".titleViewHolder");
 			}else{
 				var detailviewTemplate = jQuery('#detailViewInfoHidden');
 				//title = null;
 			}
-			// Render template data
+			// Render template data for detail view content, (like Zerg building on Creep)
 			var detailViewInfo = detailviewTemplate.html();
 			dashboardInstance.view.render(detailViewInfo,detailViewContainer);
 			// Then fill data on the template
 			var detailViewContents = jQuery('.contents',detailViewContainer);
 			dashboardInstance.view.render(data,detailViewContents);
+
+			// second title holder
+			var secondTitleViewHolder = '<div class="secondTitleViewHolder"></div><br>';
+			detailViewContents.prepend(secondTitleViewHolder);
+			console.log(this.relatedMenuIsHorizol);
+			if(this.relatedMenuIsHorizol == false){
+				var titleViewContainer = jQuery(".secondTitleViewHolder");
+			}
 			if(typeof title == 'string')
 				dashboardInstance.view.render('<h3>' + title + '</h3>',titleViewContainer);
 			else if(typeof title == 'object'){
@@ -376,9 +342,11 @@ jQuery.Class('Dashboard',{
 
 			dashboardInstance.view.ajaxyTheLinks(detailViewContainer);
 		},
+
 		getDetailViewContainer : function(){
 			return jQuery(".detailViewContainer");
 		},
+
 		relatedView : {
 			ListOfRelatedListView : {},
 
@@ -388,43 +356,19 @@ jQuery.Class('Dashboard',{
 			addLoadingGif : function(){
 				//<span class="pull-right" style="width:20px"><img class="loadinImg alignMiddle" src="layouts/vlayout/skins/softed/images/loading.gif"></span>
 			},
-			/*loadList : function(links){
-				var dashboardInstance = Dashboard.getInstance();
-				var thisInstance = this;
-				for (var i = 0; i < links.length; i++) {
-					var params = SalesPanel_Statics_Js.getUrlVars(links[i]);
-					params.type = "GET";
-
-					SalesPanel_Statics_Js.sendRequest(params).then(function(related_params,result){
-						var detailViewContainer = dashboardInstance.detailview.getDetailViewContainer();
-						var relatedContainer = jQuery(".related",detailViewContainer);
-						var relatedLink = jQuery('li[id="' + related_params.linkId + '"]', relatedContainer);
-
-						thisInstance.ListOfRelatedListView[related_params.linkId] = result;
-
-						relatedLink.find('.pull-right').remove();
-						if(typeof related_params.relatedModule != 'undefined'){
-							var tbodyContainer = jQuery(result).find('tbody');
-							if(tbodyContainer.length > 0){
-								var count = tbodyContainer.children('tr').length;
-								relatedLink.find('strong').append(' (' + count + ')');
-							}else{
-								relatedLink.find('strong').append(' (0)');
-							}
-						}
-					});
-				};
-			},*/
 			relatedMenuRender : function(data){
 				var dashboardInstance = Dashboard.getInstance();
 				var content = '<ul class="nav nav-stacked nav-pills">';
 				var DETAILVIEWTAB = data.DETAILVIEWTAB;
 				var DETAILVIEWRELATED = data.DETAILVIEWRELATED;
 
+				var activeClass = 'active active2';
 				jQuery.each(DETAILVIEWTAB,function(i,item){
-					content += '<li class="" id="'+ item.linkId +'" data-url="'+ item.linkurl +'" data-label-key="'+ item.linklabel +'" data-link-key="'+ item.linkKey +'" >';
+					content += '<li class="' + activeClass + '" id="'+ item.linkId +'" data-url="'+ item.linkurl +'" data-label-key="'+ item.linklabel +'" data-link-key="'+ item.linkKey +'" >';
 					content += '<a href="javascript:void(0);" class="textOverflowEllipsis" style="width:auto" title="'+ item.linkLabelTrans +'"><strong>'+ item.linkLabelTrans +'</strong></a>';
 					content += '</li>';
+					if(activeClass != '')
+						activeClass = '';
 				});
 				if(DETAILVIEWRELATED){
 					jQuery.each(DETAILVIEWRELATED,function(i,item){
@@ -464,6 +408,7 @@ jQuery.Class('Dashboard',{
 				});
 				this.registerRelatedMenuClick();
 			},
+
 			registerRelatedMenuClick : function(){
 				var dashboardInstance = Dashboard.getInstance();
 				var thisInstance = this;
@@ -471,35 +416,29 @@ jQuery.Class('Dashboard',{
 				var relatedContainer = jQuery(".related",detailViewContainer);
 				var detailViewContents = jQuery('.contents',detailViewContainer);
 				jQuery('li', relatedContainer).on('click',function(e){
-					/*var linkId = jQuery(this).attr('id');
-					if(typeof thisInstance.ListOfRelatedListView[linkId] != 'undefined'){
-						Dashboard.getInstance().view.render(thisInstance.ListOfRelatedListView[linkId],detailViewContents);
-						//reload again
-						detailViewContainer = dashboardInstance.detailView.getDetailViewContainer();
-						dashboardInstance.listView.rowOnclick(jQuery('tr.listViewEntries',detailViewContainer));
-					}else{
-						//var params = SalesPanel_Statics_Js.getUrlVars(jQuery(this).data('url'));
-						Dashboard.getInstance().view.render(app.vtranslate('Loading') + '...',detailViewContents);
-						
-					}*/
 
-					// Remove vertical related menu when click on horiron related menu
-					if(jQuery(this).closest('div.related').hasClass('horizon-related') && detailViewContainer.find('.related').hasClass('span2')){
-						detailViewContainer.find('.detailViewInfo > .span10').removeClass('span10').addClass('span12');
-						detailViewContainer.find('.span2').remove();
+					if( jQuery(this).closest('div.related').hasClass('horizon-related') ){
+						// Remove vertical related menu when click on horiron related menu
+						if( detailViewContainer.find('.related').hasClass('span2') ){
+							detailViewContainer.find('.detailViewInfo > .span10').removeClass('span10').addClass('span12');
+							detailViewContainer.find('.span2').remove();
+						}
+						
+						// We have two relatedContainer, and here we only care about relatedContainer of this target
+						var thisRelatedContainer = jQuery(this).closest('div.related');
+						thisRelatedContainer.find('li.active2').removeClass('active2');
+						jQuery(this).addClass('active2');
 					}
-					/*relatedContainer.find('li.active').removeClass('active');
-					jQuery(this).addClass('active');*/
 					e.preventDefault();
 
 					Dashboard.getInstance().view.render(app.vtranslate('Loading') + '...',detailViewContents);
 					app.listenPostAjaxReady(function(){
 						// Ajax all the links in related list
 						dashboardInstance.view.ajaxyTheLinks(detailViewContents);
-						/*jQuery('[name="addButton"]',detailViewContents).on('click',function(e){
-							alert(0);
-							return false;
-						});*/
+
+						// Add class active to horizonContainer after it have been removed by default
+						var horizonRelatedMenu = jQuery(".horizon-related",detailViewContainer);
+						horizonRelatedMenu.find('li.active2').addClass('active');
 					});
 				});
 			}
@@ -536,6 +475,7 @@ jQuery.Class('Dashboard',{
 				});
 			});
 		},
+
 		//Load view from preload storage;
 		loadEditViewFromPreloadStorage : function(url_vars){
 			var thisInstance = this;
@@ -558,6 +498,7 @@ jQuery.Class('Dashboard',{
 				thisInstance.registerSubmitForm(editViewPagDiv);
 			});
 		},
+
 		editViewRender : function(data,title){
 			var dashboardInstance = Dashboard.getInstance();
 			var editViewPagDiv = jQuery(".editViewPagDiv");
@@ -573,6 +514,7 @@ jQuery.Class('Dashboard',{
 
 			dashboardInstance.view.ajaxyTheLinks(editViewPagDiv);
 		},
+
 		registerSubmitForm : function(editViewPagDiv){
 			editInstance = Vtiger_Edit_Js.editInstance;
 			if(editInstance == false){
@@ -605,6 +547,7 @@ jQuery.Class('Dashboard',{
 			};
 			editInstance.registerSubmitEvent();
 		},
+
 		// preload EditView by specific url
 		editViewsPreloaded : {},
 		preloadEditView : function(url_vars){
@@ -624,31 +567,6 @@ jQuery.Class('Dashboard',{
 	listView : {
 		/*modulesAllowAjaxListView : ['Accounts','Contacts','Quotes','SalesOrder','HelpDesk','Coupons','Products','Invoice'],*/
 		ListOfListView : {},
-		/*cvIds : {},*/
-		// Get current viewname of specific modules
-		/*getCvIds : function(){
-			var thisInstance = this;
-			var Deferred = jQuery.Deferred();
-			var params = {module: 'SalesPanel',action: 'getViewNames',related_modules: this.modulesAllowAjaxListView}
-			SalesPanel_Statics_Js.sendRequest(params).then(function(cur_params,result){
-				thisInstance.cvIds = result.result;
-				Deferred.resolve(result.result);
-			},'json');
-			return Deferred.promise();
-		},
-		loadList : function(data){
-			var quickLinksContainer = jQuery(".quickLinksDiv");
-			var listViewInstance = SalesPanel_ListView_js.getInstance();
-			Dashboard.getInstance().quicklink.injectDataAttrib();
-
-			listViewInstance.setCvIds(data);
-			jQuery.each(data,function(moduleName,cvId){
-				listViewInstance.moduleName = moduleName;
-				listViewInstance.cvId = cvId;
-				listViewInstance.getListViewRecords2({page:"1"});
-			});
-		},*/
-
 		loadListView : function(params){
 			var thisInstance = this;
 			var dashboardInstance = Dashboard.getInstance();
@@ -689,6 +607,7 @@ jQuery.Class('Dashboard',{
 				SalesPanel_Statics_Js.pushHistory(params);
 			}
 		},
+
 		listViewRender : function(module,title){
 			var listViewContentsContainer = jQuery('div.listViewPageDiv');
 			var titleViewContainer = jQuery(".titleViewHolder");
@@ -707,6 +626,7 @@ jQuery.Class('Dashboard',{
 			SalesPanel_ListView_js.getInstance().registerEventsAfterRenderListViewToDOM(listViewData);
 			SalesPanel_ListView_js.getInstance().registerEvents();
 		},
+
 		registerLinkHeaderClick : function(){
 			var thisInstance = this;
 			var modulesListContanainer = jQuery(".modulesList");
@@ -726,6 +646,7 @@ jQuery.Class('Dashboard',{
 				e.preventDefault();
 			});
 		},
+
 		rowOnclick : function(rowContainer){
 			dashboardInstance = Dashboard.getInstance();
 			rowContainer.on('click',function(e){
@@ -800,9 +721,11 @@ jQuery.Class('Dashboard',{
 			}
 			/*jQuery(".searchByPhoneHolder").removeClass('hide');*/
 		},
+
 		renderActions : function(data){
 			jQuery('#actionsHolder').html(data);
 		},
+
 		resetAll : function(){
 			jQuery("#actionsHolder,#titleViewHolder,#contentViewHolder,.listViewPageDiv,.detailViewContainer,.editViewContainer").html('');
 			if(Dashboard.getInstance().detailView.relatedMenuIsHorizol == true){
@@ -810,6 +733,7 @@ jQuery.Class('Dashboard',{
 			}
 			jQuery(".mainContainer,#leftPanel,#rightPanel").removeStyle('min-height');
 		},
+
 		//Load javascript file for specific view
 		loadJs : function(module,view){
 			var Deferred = jQuery.Deferred();
@@ -821,6 +745,7 @@ jQuery.Class('Dashboard',{
 			});
 			return Deferred.promise();
 		},
+
 		loadJsOfCurrentView : function(related_params){
 			var progressInstance = jQuery.progressIndicator();
 			var aDeferred = jQuery.Deferred()
@@ -849,7 +774,7 @@ jQuery.Class('Dashboard',{
 					}else if(related_params.view == 'Edit'){
 						Vtiger_Edit_Js.editInstance = false;
 						thisInstance.jsViewInstance = Vtiger_Edit_Js.getInstance();
-						// thisInstance.jsViewInstance.registerSubmitEvent = function(){} // reset function registerSubmitEvent
+
 						// because container of Edit view has been reload to DOM and then we must rewrite the getForm function of Vtiger_Edit_Js instance
 						thisInstance.jsViewInstance.getForm = function(){
 							this.setForm(jQuery('#EditView'));
@@ -859,12 +784,11 @@ jQuery.Class('Dashboard',{
 					thisInstance.jsViewInstance.registerEvents();
 					progressInstance.hide();
 					aDeferred.resolve();
-
-					//thisInstance.renderScripts(scriptsNotIncluded);
 				});
 			});
 			return aDeferred.promise();
 		},
+
 		renderScripts : function(data){
 			var scripts = '';
 			var scriptHolder = jQuery("#scripts");
@@ -875,6 +799,7 @@ jQuery.Class('Dashboard',{
 				$('head',document).append( script );
 			};
 		},
+
 		getScriptsNotIncluded : function(srcs){
 			var scripts = document.getElementsByTagName("script");
 			var scriptsIncluded = [];
@@ -892,15 +817,19 @@ jQuery.Class('Dashboard',{
 			});
 			return ScriptsNotIncluded;
 		},
+
 		setModule : function(value){
 			jQuery("#module").val(value);
 		},
+
 		setView : function(value){
 			jQuery("#view").val(value);
 		},
+
 		setRecordId : function(value){
 			jQuery("#recordId").val(value);
 		},
+
 		//function to prevent default when click to any links in the view and send via Ajax request insteads
 		ajaxyTheLinks : function(container){
 			dashboardInstance = Dashboard.getInstance();
@@ -929,7 +858,7 @@ jQuery.Class('Dashboard',{
 		}
 	},
 
-	//function to rewrite specific functions in detail.js before they being registed
+	//function to rewrite specific functions in detail.js before they are being registed
 	rewriteDetailViewFunctions : function(jsViewInstance){
 		var thisDashboardInstance = this;
 		/**
@@ -1000,11 +929,6 @@ jQuery.Class('Dashboard',{
 				Vtiger_Header_Js.getInstance().labelSearch(currentTarget);
 				var val = currentTarget.val();
 				jQuery("#globalSearchValue").val(val).focus();
-				/*var searchByPhoneHolder = jQuery('.searchByPhoneHolder');
-				if(searchByPhoneHolder.html() == ''){
-					searchByPhoneContainer.clone().appendTo('.searchByPhoneHolder');
-					thisInstance.registerSearchByPhone();
-				}*/
 			}
 		});
 		searchByPhoneBtn.on('click',function(){
