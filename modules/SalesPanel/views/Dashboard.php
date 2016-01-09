@@ -18,18 +18,6 @@ class SalesPanel_Dashboard_View extends Vtiger_Index_View {
 		$viewer->view('Dashboard.tpl', $request->getModule());
 	}
 
-	/*function createCustomLessFile(){
-		global $root_directory;
-		$lessContent = "
-		@import '" . Vtiger_Theme::getCurrentUserThemePath() . "/variables.less';
-
-		.nav.massEditTabs li.active2 a {background: @baseThemeColor;color: #ffffff;margin-left: 10px;}";
-
-		$file = fopen($root_directory . "SalesPanel.less","w");
-		fwrite($file,$lessContent);
-		fclose($file);
-	}*/
-
 	function getHeaderScripts(Vtiger_Request $request) {
 		$headerScriptInstances = parent::getHeaderScripts($request);
 

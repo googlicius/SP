@@ -13,10 +13,10 @@
 	.selected2{
 		text-decoration: underline;
 	}
-	.intro{
+	.intro,.loadingContainer{
 		text-align: center;
 	}
-	.intro strong{
+	.intro strong,.loadingContainer strong{
 		color: #ccc;
 		font-size: 50px;
 		padding-top: 50px;
@@ -106,7 +106,7 @@
 </div>
 
 <div class="hide" id="horizonRelatedMenuClone">
-	
+	<!-- Use to hold related horizon menu -->
 </div>
 
 <div class="hide" id="detailViewInfoHidden_withHorizolRelatedMenu">
@@ -134,6 +134,12 @@
 			</form>
 		</div>
 		<div class="related span2 marginLeftZero">{vtranslate('Loading',$MODULE_NAME)}...</div>
+	</div>
+</div>
+
+<div class="hide loadingStatus">
+	<div class="loadingContainer" style="margin-top:20px">
+		<strong class="row-fluid">{vtranslate('Loading',$MODULE_NAME)}...</strong>
 	</div>
 </div>
 

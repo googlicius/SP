@@ -163,7 +163,6 @@ jQuery.Class('Dashboard',{
 			SalesPanel_Statics_Js[functionTarget](params).then(function(related_params,result){
 				aDeferred.resolve(result);
 				dashboardInstance.view.setModule(related_params.module);
-				console.log(related_params.module);
 				dashboardInstance.view.setView(related_params.view);
 				dashboardInstance.view.setRecordId(related_params.record);
 				//Load js files of current view of this view
@@ -184,7 +183,6 @@ jQuery.Class('Dashboard',{
 			 */
 			jQuery.when(aDeferred,bDeferred).then(function(sumaryHTML,detailViewData){
 				var module = app.getModuleName();
-				console.log(module);
 				// RENDER CONTENT
 				thisInstance.detaiViewRender(sumaryHTML, thisInstance.buildTitle(detailViewData));
 
@@ -201,7 +199,6 @@ jQuery.Class('Dashboard',{
 
 		setHorizonRelatedMenuInOneRow : function(){
 			//var thisInstance = this;
-
 			var detailViewContainer = this.getDetailViewContainer();
 			var relatedContainer = jQuery(".related",detailViewContainer);
 			var ListItems = jQuery('li',relatedContainer);
@@ -322,7 +319,7 @@ jQuery.Class('Dashboard',{
 			// second title holder
 			var secondTitleViewHolder = '<div class="secondTitleViewHolder"></div><br>';
 			detailViewContents.prepend(secondTitleViewHolder);
-			console.log(this.relatedMenuIsHorizol);
+
 			if(this.relatedMenuIsHorizol == false){
 				var titleViewContainer = jQuery(".secondTitleViewHolder");
 			}
@@ -431,12 +428,12 @@ jQuery.Class('Dashboard',{
 					}
 					e.preventDefault();
 
-					Dashboard.getInstance().view.render(app.vtranslate('Loading') + '...',detailViewContents);
+					var loadingStatus = jQuery('.loadingStatus').html();
+					Dashboard.getInstance().view.render(loadingStatus,detailViewContents);
 					app.listenPostAjaxReady(function(){
 						// Ajax all the links in related list
 						dashboardInstance.view.ajaxyTheLinks(detailViewContents);
-
-						// Add class active to horizonContainer after it have been removed by default
+						// Add active class to horizonContainer after it has been removed by default
 						var horizonRelatedMenu = jQuery(".horizon-related",detailViewContainer);
 						horizonRelatedMenu.find('li.active2').addClass('active');
 					});
@@ -845,8 +842,9 @@ jQuery.Class('Dashboard',{
 				if(url_vars.module == 'Users'){
 					return;
 				}
-				if(url_vars.view == 'Detail')
+				if(url_vars.view == 'Detail'){
 					dashboardInstance.detailView.loadDetailView(url_vars);
+				}
 				else if(url_vars.view == 'Edit')
 					dashboardInstance.editView.loadEditView(url_vars);
 				e.preventDefault();
