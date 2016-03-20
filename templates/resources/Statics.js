@@ -1,7 +1,7 @@
 jQuery.Class("SalesPanel_Statics_Js",{
 	specific_modules : ['Accounts','Contacts'],
 	specific_related_modules : ['Quotes','SalesOrder','Invoice','HelpDesk','Coupons','PBXManager'],
-
+	debugEnable : false,
 	/**
 	 * by haidang009 Function to get variable in url
 	 * @return : object - varialble of GET
@@ -20,6 +20,11 @@ jQuery.Class("SalesPanel_Statics_Js",{
 		vars[key] = value;
 		});
 		return vars;
+	},
+
+	log : function(log){
+		if(this.debugEnable)
+			console.log(log);
 	},
 
 	// function to push history from object output from getUrlVars function

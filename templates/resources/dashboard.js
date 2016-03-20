@@ -144,6 +144,7 @@ jQuery.Class('Dashboard',{
 
 		loadDetailView : function(url_vars,isPjax){
 			var thisInstance = this;
+			//If previous request is pending, return
 			if(this.pending == true) return;
 			this.pending = true;
 			var dashboardInstance = Dashboard.getInstance();
@@ -161,12 +162,17 @@ jQuery.Class('Dashboard',{
 
 			//Get detailview CONTENT
 			SalesPanel_Statics_Js[functionTarget](params).then(function(related_params,result){
-				aDeferred.resolve(result);
 				dashboardInstance.view.setModule(related_params.module);
 				dashboardInstance.view.setView(related_params.view);
 				dashboardInstance.view.setRecordId(related_params.record);
 				//Load js files of current view of this view
-				dashboardInstance.view.loadJsOfCurrentView(related_params);
+				SalesPanel_Statics_Js.log('1. bind detailviewready to document');
+				jQuery(document).on('detailviewready', function(){
+					dashboardInstance.view.loadJsOfCurrentView(related_params);
+					SalesPanel_Statics_Js.log('4. detailviewready fire');
+					jQuery(document).off('detailviewready');
+				});
+				aDeferred.resolve(result);
 				thisInstance.pending = false;
 			});
 
@@ -184,6 +190,7 @@ jQuery.Class('Dashboard',{
 			jQuery.when(aDeferred,bDeferred).then(function(sumaryHTML,detailViewData){
 				var module = app.getModuleName();
 				// RENDER CONTENT
+				SalesPanel_Statics_Js.log('2. detailvier render');
 				thisInstance.detaiViewRender(sumaryHTML, thisInstance.buildTitle(detailViewData));
 
 				//RENDER RELATED MENU
@@ -338,6 +345,9 @@ jQuery.Class('Dashboard',{
 			app.changeSelectElementView(detailViewContents);
 
 			dashboardInstance.view.ajaxyTheLinks(detailViewContainer);
+
+			SalesPanel_Statics_Js.log('3. trigger detailviewready');
+			jQuery(document).trigger('detailviewready');
 		},
 
 		getDetailViewContainer : function(){
